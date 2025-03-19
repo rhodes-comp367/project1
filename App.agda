@@ -6,8 +6,6 @@ open import Agda.Builtin.IO
   using (IO)
 open import Agda.Builtin.List
   using (List)
-open import Agda.Builtin.Maybe
-  using (Maybe; just; nothing)
 open import Agda.Builtin.Nat
   using (Nat; suc; zero)
 open import Agda.Builtin.String
@@ -60,18 +58,14 @@ module Internal where
     run-brick : ∀ {S : Set} → Nat → (Gen → S) → (S → List (List Char)) → (Event → S → S)
       → IO ⊤
 
-from-nat : ∀ n → Nat
-  → Maybe (Fin n)
-from-nat zero _
-  = nothing
-from-nat (suc n) zero
-  = just zero
-from-nat (suc n) (suc k)
-  with from-nat n k
-... | nothing
-  = nothing
-... | just l
-  = just (suc l)
+  from-nat : ∀ n → Nat
+    → Fin n
+  from-nat zero _
+    = undefined
+  from-nat (suc n) zero
+    = zero
+  from-nat (suc n) (suc k)
+    = suc (from-nat n k)
 
 -- randomly generate a Fin value; return the new generator.
 gen-fin : ∀ {n} → Gen
@@ -79,11 +73,7 @@ gen-fin : ∀ {n} → Gen
 gen-fin {n} g
   with Internal.gen-nat (suc n) g
 ... | k , g
-  with from-nat (suc n) k
-... | nothing
-  = Internal.undefined
-... | just l
-  = l , g
+  = Internal.from-nat (suc n) k , g
 
 -- first argument is time between ticks in microseconds.
 run : Nat → App
